@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Budgetly — pencatat pengeluaran dengan visualisasi budget" />
+  <title>Budgetly — Expense &amp; Budget Visualizer</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23807af0'/%3E%3Cstop offset='1' stop-color='%235a4bd1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect x='2' y='2' width='44' height='44' rx='14' fill='url(%23g)'/%3E%3Ccircle cx='22' cy='23' r='9' fill='none' stroke='white' stroke-width='5' stroke-dasharray='30 57' stroke-linecap='round' transform='rotate(40 22 23)'/%3E%3Ccircle cx='33' cy='33.5' r='4' fill='white' opacity='.92'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
+  <script src="js/app.js" defer></script>
+</head>
+<body>
+
+  <header class="app-header">
+    <header class="brand">
+      <!-- Logo Budgetly -->
+      <svg class="brand-logo" viewBox="0 0 48 48" role="img" aria-label="Logo Budgetly">
+        <defs>
+          <linearGradient id="logoGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="var(--accent)" />
+            <stop offset="1" stop-color="var(--accent-strong)" />
+          </linearGradient>
+          <linearGradient id="logoGlow" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#ffffff" stop-opacity=".55" />
+            <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+          </linearGradient>
+        </defs>
+        <rect x="1.5" y="1.5" width="45" height="45" rx="14.5" fill="url(#logoGrad)" />
+        <rect x="1.5" y="1.5" width="45" height="45" rx="14.5" fill="url(#logoGlow)" />
+        <!-- cincin pie chart -->
+        <circle class="logo-ring" cx="22" cy="22.5" r="9" fill="none" stroke="#ffffff" stroke-width="5"
+                stroke-dasharray="30 57" stroke-linecap="round" transform="rotate(40 22 22.5)" />
+        <!-- titik koin -->
+        <circle class="logo-dot" cx="33.5" cy="34" r="4" fill="#ffffff" opacity=".92" />
+      </svg>
+      <hgroup class="brand-text">
+        <h1>Budgetly</h1>
+        <p>Expense &amp; Budget Visualizer</p>
+      </hgroup>
+    </header>
+    <button id="themeToggle" class="theme-toggle" type="button"
+            aria-label="Ganti tema terang / gelap" title="Ganti tema">
+      <svg class="icon-sun" aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+      </svg>
+      <svg class="icon-moon" aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
+      </svg>
+    </button>
+  </header>
+
+  <main class="app-main">
+
+    <!-- ===== Ringkasan ===== -->
+    <section class="summary-grid" aria-label="Ringkasan keuangan">
+
+      <article class="card balance-card">
+        <p class="card-label">Total Expense</p>
+        <p class="balance-amount" id="totalExpense">Rp 0</p>
+      </article>
+
+      <article class="card budget-card">
+        <header class="budget-head">
+          <p class="card-label">Monthly Limit</p>
+          <span id="budgetBadge" class="budget-badge" hidden>Over budget</span>
+        </header>
+        <p class="budget-input-wrap">
+          <span class="budget-currency" aria-hidden="true">Rp</span>
+          <input type="number" id="budgetLimit" min="0" step="1000"
+                 inputmode="numeric" placeholder="Set batas pengeluaran" aria-label="Batas pengeluaran bulanan" />
+        </p>
+        <p class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100"
+             aria-valuenow="0" aria-label="Penggunaan batas pengeluaran bulanan">
+          <span class="progress-bar" id="budgetBar"></span>
+        </p>
+        <p class="budget-note" id="budgetNote">Belum ada batas ditetapkan.</p>
+      </article>
+
+    </section>
+
+    <section class="panel-grid">
+
+      <!-- ===== Form ===== -->
+      <section class="card form-card" aria-label="Tambah transaksi">
+        <h2 class="card-title">Tambah Transaksi</h2>
+        <form id="transactionForm" novalidate>
+          <fieldset class="field-row">
+            <p class="field">
+              <label for="itemType">Type</label>
+              <select id="itemType" name="itemType" aria-label="Tipe transaksi">
+                <option value="expense" selected>Expense</option>
+              </select>
+            </p>
+
+            <p class="field">
+              <label for="itemCategory">Category</label>
+              <select id="itemCategory" name="itemCategory" aria-label="Kategori transaksi">
+                <option value="" selected disabled>— Pilih kategori —</option>
+                <option value="Food">Food</option>
+                <option value="Transport">Transport</option>
+                <option value="Fun">Fun</option>
+              </select>
+              <p class="field-error" id="itemCategoryError" hidden></p>
+            </p>
+          </fieldset>
+
+          <p class="field">
+            <label for="itemName">Item Name</label>
+            <input type="text" id="itemName" name="itemName"
+                   placeholder="cth: Kopi Kenangan" maxlength="60" autocomplete="off" />
+            <p class="field-error" id="itemNameError" hidden></p>
+          </p>
+
+          <p class="field">
+            <label for="itemAmount">Amount</label>
+            <span class="amount-wrap">
+              <span class="amount-currency" aria-hidden="true">Rp</span>
+              <input type="number" id="itemAmount" name="itemAmount"
+                     min="0" step="any" inputmode="decimal"
+                     placeholder="0" aria-label="Jumlah atau nominal" />
+            </span>
+            <p class="field-error" id="itemAmountError" hidden></p>
+          </p>
+
+          <button type="submit" class="btn-primary">Simpan Transaksi</button>
+        </form>
+      </section>
+
+      <!-- ===== Chart ===== -->
+      <section class="card chart-card" aria-label="Grafik pengeluaran per kategori">
+        <h2 class="card-title">Expense Breakdown</h2>
+        <figure class="chart-wrap">
+          <canvas id="categoryChart" role="img"
+                  aria-label="Diagram lingkaran pengeluaran per kategori"></canvas>
+          <p class="chart-empty" id="chartEmpty">Belum ada transaksi untuk divisualkan</p>
+        </figure>
+      </section>
+
+    </section>
+
+    <!-- ===== Transactions ===== -->
+    <section class="card list-card" aria-label="Daftar transaksi">
+      <header class="list-head">
+        <h2 class="card-title">Transactions</h2>
+        <label class="sort-label" for="sortSelect">
+          <svg class="sort-icon" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v18M3 7l4-4 4 4M17 21V3M13 17l4 4 4-4"/></svg>
+          <select id="sortSelect" aria-label="Urutkan transaksi">
+            <option value="date-desc" selected>Terbaru</option>
+            <option value="date-asc">Terlama</option>
+            <option value="amount-desc">Jumlah tertinggi</option>
+            <option value="amount-asc">Jumlah terendah</option>
+            <option value="category">Kategori A–Z</option>
+          </select>
+        </label>
+      </header>
+
+      <ul class="transaction-list" id="transactionList" tabindex="0"
+          aria-label="Transaksi tersimpan"></ul>
+      <p class="list-empty" id="listEmpty">Belum ada transaksi. Mulai catat pengeluaran pertamamu di atas.</p>
+    </section>
+
+    <footer class="app-footer">
+      <p>&copy; 2026 itsonedev — All rights reserved.</p>
+    </footer>
+
+  </main>
+
+</body>
+</html>
